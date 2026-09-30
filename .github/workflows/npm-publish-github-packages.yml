@@ -1,0 +1,46 @@
+# Runs the tests and publishes the package to GitHub Packages when a release is created.
+# https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
+
+name: Node.js Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  publish-gpr:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com/
+          scope: '@trqxyz'
+      - run: npm ci
+      - name: Check release tag matches package version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "::error::Release tag $GITHUB_REF_NAME does not match package.json version $VERSION"
+            exit 1
+          fi
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

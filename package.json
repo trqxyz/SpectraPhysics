@@ -1,5 +1,5 @@
 {
-  "name": "spectra-physics",
+  "name": "@trqxyz/spectra-physics",
   "version": "1.0.0",
   "description": "Vanilla-accurate client physics and movement for mineflayer (1.16.5 - 26.1)",
   "main": "index.js",
@@ -30,8 +30,11 @@
     "url": "https://github.com/trqxyz/SpectraPhysics/issues"
   },
   "homepage": "https://github.com/trqxyz/SpectraPhysics#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "dependencies": {
     "prismarine-block": "^1.23.0",
