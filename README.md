@@ -151,18 +151,6 @@ npm test
 Offline tests for 1.16.5, 1.18.2, 1.20.4, 1.21.4 and 26.1 cover free fall, landing on full blocks and slabs,
 walking and sprinting speed, jump height, step-up, wall collision, sneaking at an edge, ice and cobwebs.
 
-## Releasing
-
-Releases are published to [npm](https://www.npmjs.com/package/spectra-physics) by GitHub Actions.
-
-1. Bump `version` in `package.json` and push to `main`.
-2. Create a GitHub release with the tag `v<version>` (for example `v1.0.1`).
-
-The *Publish to npm* workflow then runs the tests, checks that the tag matches `package.json`, and runs
-`npm publish --provenance --access public`. Publishing needs the repository secret `NPM_TOKEN`
-(an npm granular access token with read and write access to packages and two-factor bypass enabled;
-set it with `gh secret set NPM_TOKEN`). npm limits the lifetime of such tokens, so rotate it before it expires.
-
 ## License
 
 [GPL-3.0](LICENSE)
