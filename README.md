@@ -22,7 +22,10 @@ several places that are visible to the server:
 | Collision | legacy 1.8 algorithm | `Shapes.collide` with VoxelShape epsilons, Y → larger horizontal axis order |
 | Step-up | single step | pre-1.21 heuristic and 1.21+ candidate step heights |
 | First tick after a teleport | moves immediately | no movement, gravity applied after `move`, like vanilla |
-| Position packets | time based, last-sent values reset on teleport | `sendPosition` rules: 2·10⁻⁴ threshold, 20-tick reminder, last-sent values kept across teleports |
+| Position packets | time based, last-sent values reset on teleport | `sendPosition` rules: 0.03 threshold before 1.18.2 and 2·10⁻⁴ after, 20-tick reminder, last-sent values kept across teleports |
+| Input | raw ±1 | per version: sneak/item scaling then 0.98 up to 1.21.4, normalized square movement from 1.21.5 |
+| Wall collisions | always zeroes the blocked axis | 1.14–1.18.1 keep X speed in corners, 1.18.2+ compare with an epsilon |
+| Block effects | during the move | during the move before 1.21.2, after travel along the path from 1.21.2 |
 | Rotation | continuous interpolation | whole mouse steps of 0.15°, accumulated in float |
 | Sprint | applied the same tick | speed attribute updated at the end of the tick, as in `Player#aiStep` |
 | Tick loop | fixed interval | `Minecraft` timer: catches up at most 10 ticks |
@@ -31,6 +34,7 @@ several places that are visible to the server:
 | Teleport answer | one order for all versions | per version (1.21.2–1.21.3 send position before the confirmation) |
 | Vehicles | rotation packets only | boat simulation with paddle / input / vehicle move packets, minecart riding |
 | Brand, 1.20.2+ | sent in play state | sent in the configuration phase, once |
+| Open container | keeps moving | movement keys are ignored while a window is open, as in the game |
 
 It also fixes three mineflayer issues that leave a bot stuck:
 
@@ -131,16 +135,18 @@ See [`test/helpers.js`](test/helpers.js) for a complete in-memory world.
 ## What is simulated
 
 - gravity, air drag and ground friction (slipperiness per block, supporting block on 1.20+)
-- collisions against block shapes, step-up, sneaking edge back-off (both the old and the 1.21.2+ rules)
-- walking, sprinting (double-tap and key), sprint-jumping, crouch pose and its bounding box
-- water and lava with flow pushing, climbing (ladders, vines, scaffolding, trapdoors over ladders)
-- cobweb, sweet berry bush, powder snow, honey (sliding), soul sand, slime and bed bouncing
-- levitation, slow falling, jump boost, speed / slowness via attributes, dolphin's grace
+- collisions against block shapes, step-up, sneaking edge back-off
+- walking, sprinting (double-tap and key), sprint-jumping, crouching, crawling and swimming poses
+- water and lava with flow pushing, swimming, climbing (ladders, vines, scaffolding, trapdoors over ladders, powder snow in leather boots)
+- cobweb (and weaving), sweet berry bush, powder snow, honey sliding, bubble columns, soul sand, slime and bed bouncing
+- being pushed out of blocks and by overlapping entities
+- levitation, slow falling, jump boost, dolphin's grace, depth strider and soul speed,
+  attributes: movement speed, gravity, jump strength, step height, sneaking speed, movement and water efficiency
 - creative flight, including toggling with a double jump and landing
 - knockback and explosion velocity, 1.21.2+ relative teleports with velocity
 - riding boats (client-controlled) and minecarts
 
-Not simulated yet: elytra flight, swimming pose, bubble columns, entity collisions, world border.
+Not simulated yet: elytra flight, riptide, world border.
 
 ## Tests
 
@@ -148,8 +154,17 @@ Not simulated yet: elytra flight, swimming pose, bubble columns, entity collisio
 npm test
 ```
 
-Offline tests for 1.16.5, 1.18.2, 1.20.4, 1.21.4 and 26.1 cover free fall, landing on full blocks and slabs,
-walking and sprinting speed, jump height, step-up, wall collision, sneaking at an edge, ice and cobwebs.
+Offline tests for 1.16.5 – 26.1 cover free fall, landing on blocks and slabs, walking and sprinting speed,
+jump height, step-up, walls and corners, sneaking at an edge, input per version, swimming, cobwebs, bubble columns,
+ice, soul sand, pushing, and the position reporting thresholds.
+
+## Layout
+
+```
+lib/engine          world access, collisions, version switches, boat
+lib/engine/player   the player tick: input, fluids, blocks under the player, move, travel, block effects, pose, pushing
+lib/client          mineflayer integration: controls, teleports, server packets, position reporting, riding, tick loop
+```
 
 ## License
 

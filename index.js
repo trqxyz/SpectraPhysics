@@ -1,7 +1,7 @@
 'use strict'
 
-const spectraPhysics = require('./lib/plugin')
-const { PlayerPhysics } = require('./lib/engine/physics')
+const spectraPhysics = require('./lib/client')
+const { PlayerPhysics } = require('./lib/engine/player')
 const BoatPhysics = require('./lib/engine/boat')
 const WorldView = require('./lib/engine/world')
 const AABB = require('./lib/engine/aabb')
