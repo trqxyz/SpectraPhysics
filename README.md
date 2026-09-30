@@ -27,7 +27,7 @@ several places that are visible to the server:
 | Wall collisions | always zeroes the blocked axis | 1.14–1.18.1 keep X speed in corners, 1.18.2+ compare with an epsilon |
 | Block effects | during the move | during the move before 1.21.2, after travel along the path from 1.21.2 |
 | Rotation | continuous interpolation | whole mouse steps of 0.15°, accumulated in float |
-| Sprint | applied the same tick | speed attribute updated at the end of the tick, as in `Player#aiStep` |
+| Sprint | applied the same tick | speed follows the sprint state in the tick it is sent, as the server applies it |
 | Tick loop | fixed interval | `Minecraft` timer: catches up at most 10 ticks |
 | 1.21.2+ | no `tick_end` | `tick_end` after every tick, `player_input` on key change |
 | 1.21.4+ | `player_loaded` on first health update | sent once the level around the player is loaded |
@@ -36,11 +36,17 @@ several places that are visible to the server:
 | Brand, 1.20.2+ | sent in play state | sent in the configuration phase, once |
 | Open container | keeps moving | movement keys are ignored while a window is open, as in the game |
 
-It also fixes three mineflayer issues that leave a bot stuck:
+It also works around mineflayer issues that break movement:
 
 - an empty full chunk (no sections) sent to a 1.16 client is treated as an unload, so the player never ticks in it;
 - a removed vehicle is never dismounted (`entityGone` is listened for on the wrong emitter);
-- an out-of-range hotbar slot from the server throws inside the packet handler.
+- an out-of-range hotbar slot from the server throws inside the packet handler;
+- player attributes are misread: stored under `undefined` on 1.16.5 – 1.20.4 and named from an outdated id table
+  on 1.21+ (on 1.21.2 – 1.21.5 movement speed arrives as step height), so speed effects and step height go wrong.
+
+Before 1.18.2 the client only reports moves longer than 0.03. Airborne moves shorter than that are still reported,
+and on 1.17 – 1.18.1 the mouse holds a turn for up to two seconds while such moves last, because anti-cheats
+cannot reconstruct the skipped vertical movement.
 
 ## Installation
 

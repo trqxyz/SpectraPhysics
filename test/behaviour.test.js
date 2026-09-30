@@ -156,3 +156,35 @@ test('soul sand slows walking, flying ignores it', () => {
   }
   assert.ok(run(false) < run(true))
 })
+
+test('small airborne moves are reported before 1.18.2, except turning ones from 1.17', () => {
+  for (const [version, turn, expected] of [['1.16.5', false, 'position'], ['1.16.5', true, 'position_look'], ['1.17.1', false, 'position'], ['1.17.1', true, 'look']]) {
+    const { p } = makePlayer(version)
+    spawn(p, 0.5, 100, 0.5)
+    const { ctx, sent } = reporterFor(p)
+    ctx.state.last = { x: 0.5, y: 100, z: 0.5, yRot: 0, xRot: 0, onGround: false, horizontalCollision: false }
+    p.pos.y -= 0.004
+    if (turn) p.yRot = 10
+    ctx.sendPosition()
+    assert.equal(sent.at(-1)?.name, expected, `${version} turn=${turn}`)
+  }
+})
+
+test('attributes are read from the packet with the real 1.21 registry ids', () => {
+  const { EventEmitter } = require('node:events')
+  const { createEnvironment } = require('../lib/client/environment')
+  for (const [version, speedId] of [['1.21.4', 21], ['1.21.8', 22]]) {
+    const registry = require('prismarine-registry')(version)
+    const type = registry.protocol.play.toClient.types.packet_entity_update_attributes
+    const names = JSON.parse(JSON.stringify(type).match(/"mappings":(\{[^}]*\})/)[1])
+    const client = new EventEmitter()
+    const bot = { registry, _client: client, entity: { id: 7 }, entities: {} }
+    const env = createEnvironment(bot)
+    client.emit('entity_update_attributes', {
+      entityId: 7,
+      properties: [{ key: names[speedId] ?? String(speedId), value: 0.1, modifiers: [{ uuid: 'minecraft:sprinting', amount: 0.3, operation: 2 }] }]
+    })
+    assert.ok(Math.abs(env.movementSpeed(true) - 0.13) < 1e-6, version)
+    assert.equal(env.attribute('step_height', 0.6), 0.6, version)
+  }
+})
