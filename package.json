@@ -1,0 +1,48 @@
+{
+  "name": "spectra-physics",
+  "version": "1.0.0",
+  "description": "Vanilla-accurate client physics and movement for mineflayer (1.16.5 - 26.1)",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "lib/",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "keywords": [
+    "mineflayer",
+    "minecraft",
+    "physics",
+    "movement",
+    "bot",
+    "prismarine"
+  ],
+  "author": "trqxyz",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trqxyz/SpectraPhysics.git"
+  },
+  "bugs": {
+    "url": "https://github.com/trqxyz/SpectraPhysics/issues"
+  },
+  "homepage": "https://github.com/trqxyz/SpectraPhysics#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "prismarine-block": "^1.23.0",
+    "prismarine-chunk": "^1.39.0",
+    "vec3": "^0.1.10"
+  },
+  "peerDependencies": {
+    "mineflayer": ">=4.30.0"
+  },
+  "devDependencies": {
+    "mineflayer": "^4.39.0",
+    "prismarine-registry": "^1.12.0"
+  }
+}
