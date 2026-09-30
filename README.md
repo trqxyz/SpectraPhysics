@@ -1,5 +1,6 @@
 # SpectraPhysics
 
+[![npm](https://img.shields.io/npm/v/spectra-physics)](https://www.npmjs.com/package/spectra-physics)
 [![Tests](https://github.com/trqxyz/SpectraPhysics/actions/workflows/test.yml/badge.svg)](https://github.com/trqxyz/SpectraPhysics/actions/workflows/test.yml)
 
 Improved physics and movement engine for [mineflayer](https://github.com/PrismarineJS/mineflayer).
@@ -39,31 +40,16 @@ It also fixes three mineflayer issues that leave a bot stuck:
 
 ## Installation
 
-The package is published to GitHub Packages. Point the `@trqxyz` scope to it in your project's `.npmrc`:
-
-```
-@trqxyz:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-```
-
-`GITHUB_TOKEN` is a personal access token with the `read:packages` scope. Then:
-
 ```bash
-npm install @trqxyz/spectra-physics
+npm install spectra-physics mineflayer
 ```
 
-Or straight from the repository, without a token:
-
-```bash
-npm install github:trqxyz/SpectraPhysics
-```
-
-`mineflayer` is a peer dependency (4.30 or newer). Node.js 22 or newer.
+Requires Node.js 22 or newer and mineflayer 4.30 or newer.
 
 ## Usage
 
 ```js
-const { createBot } = require('@trqxyz/spectra-physics')
+const { createBot } = require('spectra-physics')
 
 const bot = createBot({
   host: 'localhost',
@@ -86,7 +72,7 @@ With an existing `mineflayer.createBot` call, install it under the `physics` key
 
 ```js
 const mineflayer = require('mineflayer')
-const spectraPhysics = require('@trqxyz/spectra-physics')
+const spectraPhysics = require('spectra-physics')
 
 const bot = mineflayer.createBot({
   host: 'localhost',
@@ -123,7 +109,7 @@ Added:
 The engine can run without a connection, for prediction or tests:
 
 ```js
-const { PlayerPhysics, WorldView, versionFlags } = require('@trqxyz/spectra-physics')
+const { PlayerPhysics, WorldView, versionFlags } = require('spectra-physics')
 
 // `source` needs { registry, world: { getColumn(chunkX, chunkZ) }, game: { minY, height } }
 const player = new PlayerPhysics(new WorldView(source), versionFlags(source.registry), {
@@ -168,7 +154,7 @@ walking and sprinting speed, jump height, step-up, wall collision, sneaking at a
 ## Releasing
 
 Bump `version` in `package.json`, then create a GitHub release with the tag `v<version>` (for example `v1.0.1`).
-The *Node.js Package* workflow runs the tests and publishes the package to GitHub Packages.
+The *Publish to npm* workflow runs the tests and publishes the package to npm.
 
 ## License
 

@@ -1,7 +1,7 @@
-# Runs the tests and publishes the package to GitHub Packages when a release is created.
-# https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
+# Runs the tests and publishes the package to npm when a GitHub release is created.
+# Requires the repository secret NPM_TOKEN (npm automation / granular token with publish rights).
 
-name: Node.js Package
+name: Publish to npm
 
 on:
   release:
@@ -19,19 +19,18 @@ jobs:
       - run: npm ci
       - run: npm test
 
-  publish-gpr:
+  publish-npm:
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: https://npm.pkg.github.com/
-          scope: '@trqxyz'
+          registry-url: https://registry.npmjs.org/
       - run: npm ci
       - name: Check release tag matches package version
         run: |
@@ -41,6 +40,6 @@ jobs:
             echo "::error::Release tag $GITHUB_REF_NAME does not match package.json version $VERSION"
             exit 1
           fi
-      - run: npm publish
+      - run: npm publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
