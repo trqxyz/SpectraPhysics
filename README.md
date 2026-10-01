@@ -129,6 +129,35 @@ Added:
 - `bot.spectra.world` – block and fluid lookups used by the engine
 - event `clientLoaded` – 1.21.4+, emitted when `player_loaded` is sent
 
+### Pathfinder
+
+A built-in pathfinder with the same API as mineflayer-pathfinder, driven by the engine itself:
+
+```js
+const { createBot, goals } = require('spectra-physics')
+
+const bot = createBot({ host: 'localhost', username: 'Steve', version: '1.21.4' })
+
+bot.once('spawn', async () => {
+  await bot.pathfinder.goto(new goals.GoalBlock(120, 64, -40))
+  bot.pathfinder.setGoal(new goals.GoalFollow(bot.nearestEntity(e => e.name === 'cow'), 2), true)
+})
+```
+
+- A* with costs in ticks, so it picks the fastest route: walking, sprinting, slabs and stairs without jumping,
+  jumps, drops, sprint-jumps over gaps, ladders and vines, swimming, and digging through, up and down
+- keys are chosen by simulating the player a few ticks ahead with this engine: when to sprint, when to jump,
+  which corners can be cut
+- turning goes through the mouse model; blocks are broken tick by tick like the game client (face in view,
+  progress and swing every tick, 5 ticks between blocks), also available as `bot.spectra.dig(block)`
+- the route is planned again when blocks on it change, the goal moves or the bot gets stuck
+- goals: `GoalBlock`, `GoalNear`, `GoalXZ`, `GoalNearXZ`, `GoalY`, `GoalGetToBlock`, `GoalLookAtBlock`,
+  `GoalFollow`, `GoalCompositeAny`, `GoalCompositeAll`, `GoalInvert`
+- `bot.pathfinder.settings`: `canDig`, `allowParkour`, `allowLongParkour`, `allowSprinting`, `maxDropDown`,
+  `thinkTimeout`, `tickTimeout`; events `path_update`, `path_reset`, `path_stop`, `goal_reached`, `goal_updated`
+
+mineflayer-pathfinder works too: `bot.physics.simulatePlayer` runs its look-ahead on this engine.
+
 ### Standalone engine
 
 The engine can run without a connection, for prediction or tests:
@@ -186,6 +215,7 @@ powder snow, ice, soul sand, pushing, item use, and the position reporting thres
 lib/engine          world access, collisions, version switches, boat
 lib/engine/player   the player tick: input, fluids, blocks under the player, move, travel, block effects and their
                     traversal order, pose, pushing
+lib/pathfinder      goals, terrain, moves, A*, block breaking and the path follower
 lib/client          mineflayer integration: controls, teleports, server packets, position reporting, riding, item use,
                     entity interaction, registry tables, protocol fixes, the shared clock
 bench               tick cost and bit-exact output fingerprints

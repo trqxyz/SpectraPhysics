@@ -25,3 +25,4 @@ module.exports.BoatPhysics = BoatPhysics
 module.exports.WorldView = WorldView
 module.exports.AABB = AABB
 module.exports.versionFlags = versionFlags
+module.exports.goals = require('./lib/pathfinder/goals')

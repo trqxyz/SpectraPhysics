@@ -1,7 +1,7 @@
 {
   "name": "spectra-physics",
-  "version": "1.2.0",
-  "description": "Vanilla-accurate client physics and movement for mineflayer (1.16.5 - 26.1)",
+  "version": "1.3.0",
+  "description": "Vanilla-accurate client physics, movement and pathfinding for mineflayer (1.16.5 - 26.1)",
   "main": "index.js",
   "files": [
     "index.js",
@@ -18,7 +18,8 @@
     "physics",
     "movement",
     "bot",
-    "prismarine"
+    "prismarine",
+    "pathfinder"
   ],
   "author": "trqxyz",
   "license": "GPL-3.0-only",
