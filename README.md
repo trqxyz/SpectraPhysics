@@ -25,14 +25,18 @@ several places that are visible to the server:
 | Position packets | time based, last-sent values reset on teleport | `sendPosition` rules: 0.03 threshold before 1.18.2 and 2·10⁻⁴ after, 20-tick reminder, last-sent values kept across teleports |
 | Input | raw ±1 | per version: sneak/item scaling then 0.98 up to 1.21.4, normalized square movement from 1.21.5 |
 | Wall collisions | always zeroes the blocked axis | 1.14–1.18.1 keep X speed in corners, 1.18.2+ compare with an epsilon |
-| Block effects | during the move | during the move before 1.21.2, after travel along the path from 1.21.2 |
+| Block effects | during the move | during the move before 1.21.2; from 1.21.2 after travel, walking the path in each version's own block order |
+| Powder snow | never solid | solid from above in leather boots (not while sneaking), 0.9 high when falling onto it |
+| Item use | any `activateItem`, cleared by any entity's status | only items with a use animation (food when hungry, potions, shield, bow with arrows, …), ended by release, slot change or the server; movement slowed to a fifth |
+| Actions | sent whenever called | use, dig, interact, attack and swing go out at the start of the next tick, before movement; `use_item` carries that tick's rotation |
+| Entity clicks, mounting | `interact` only | aim, `interact_at` with the hit point, `interact`, swing; leaving a vehicle by holding sneak |
 | Rotation | continuous interpolation | whole mouse steps of 0.15°, accumulated in float |
 | Sprint | applied the same tick | speed follows the sprint state in the tick it is sent, as the server applies it |
 | Tick loop | fixed interval | `Minecraft` timer: catches up at most 10 ticks |
 | 1.21.2+ | no `tick_end` | `tick_end` after every tick, `player_input` on key change |
 | 1.21.4+ | `player_loaded` on first health update | sent once the level around the player is loaded |
 | Teleport answer | one order for all versions | per version (1.21.2–1.21.3 send position before the confirmation) |
-| Vehicles | rotation packets only | boat simulation with paddle / input / vehicle move packets, minecart riding |
+| Vehicles | rotation packets only | boat simulation with paddle / input / vehicle move packets (input applies a tick later, as in the game), minecart riding |
 | Brand, 1.20.2+ | sent in play state | sent in the configuration phase, once |
 | Open container | keeps moving | movement keys are ignored while a window is open, as in the game |
 
@@ -42,11 +46,22 @@ It also works around mineflayer issues that break movement:
 - a removed vehicle is never dismounted (`entityGone` is listened for on the wrong emitter);
 - an out-of-range hotbar slot from the server throws inside the packet handler;
 - player attributes are misread: stored under `undefined` on 1.16.5 – 1.20.4 and named from an outdated id table
-  on 1.21+ (on 1.21.2 – 1.21.5 movement speed arrives as step height), so speed effects and step height go wrong.
+  on 1.21+ (on 1.21.2 – 1.21.5 movement speed arrives as step height), so speed effects and step height go wrong;
+- `set_passengers` without the bot never clears `bot.vehicle`, so after every dismount the bot keeps acting as a passenger;
+- enchantments on 1.20.5+ items are not a list (reading boots throws), and from 1.21 their ids come from the server's registry;
+- the 1.16 data numbers dolphin's grace wrong and marks every entity, arrows and items included, as a mob;
+- recipe packets on 1.20.5 – 1.21.3 and advancements on 1.21.2 – 1.21.3 fail to parse; they arrive as raw buffers there.
 
 Before 1.18.2 the client only reports moves longer than 0.03. Airborne moves shorter than that are still reported,
 and on 1.17 – 1.18.1 the mouse holds a turn for up to two seconds while such moves last, because anti-cheats
 cannot reconstruct the skipped vertical movement.
+
+## Performance
+
+All bots in a process share one 20 TPS clock. Inside a tick the engine memoises chunk columns and block data and
+reuses its collision boxes, so a player tick costs about 3 µs (`node bench/tick.js`, 50 players on a course of
+slabs, fences, water, cobwebs and honey). `node bench/trajectory.js --check` compares a fingerprint of every
+simulated position with `bench/baseline.json`, which is how optimisations are checked to change nothing.
 
 ## Installation
 
@@ -148,6 +163,7 @@ See [`test/helpers.js`](test/helpers.js) for a complete in-memory world.
 - being pushed out of blocks and by overlapping entities
 - levitation, slow falling, jump boost, dolphin's grace, depth strider and soul speed,
   attributes: movement speed, gravity, jump strength, step height, sneaking speed, movement and water efficiency
+- using items: eating, drinking, blocking with a shield, drawing a bow
 - creative flight, including toggling with a double jump and landing
 - knockback and explosion velocity, 1.21.2+ relative teleports with velocity
 - riding boats (client-controlled) and minecarts
@@ -162,14 +178,17 @@ npm test
 
 Offline tests for 1.16.5 – 26.1 cover free fall, landing on blocks and slabs, walking and sprinting speed,
 jump height, step-up, walls and corners, sneaking at an edge, input per version, swimming, cobwebs, bubble columns,
-ice, soul sand, pushing, and the position reporting thresholds.
+powder snow, ice, soul sand, pushing, item use, and the position reporting thresholds.
 
 ## Layout
 
 ```
 lib/engine          world access, collisions, version switches, boat
-lib/engine/player   the player tick: input, fluids, blocks under the player, move, travel, block effects, pose, pushing
-lib/client          mineflayer integration: controls, teleports, server packets, position reporting, riding, tick loop
+lib/engine/player   the player tick: input, fluids, blocks under the player, move, travel, block effects and their
+                    traversal order, pose, pushing
+lib/client          mineflayer integration: controls, teleports, server packets, position reporting, riding, item use,
+                    entity interaction, registry tables, protocol fixes, the shared clock
+bench               tick cost and bit-exact output fingerprints
 ```
 
 ## License
